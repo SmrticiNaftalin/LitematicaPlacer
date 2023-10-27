@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "litematicaplacer",
+  "version": "${version}",
+  "name": "LitematicaPlacer",
+  "description": "",
+  "authors": ["SmrticiNaftalin"],
+  "contact": {
+    "repo": "https://github.com/SmrticiNaftalin/LitematicaPlacer"
+  },
+  "license": "MIT",
+  "icon": "assets/litematicaplacer/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "naftalin.litematicaplacer.client.LitematicaPlacerClient"
+    ]
+  },
+  "depends": {
+    "minecraft": "1.20.x",
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "malilib": "0.17.x",
+    "litematica": "0.16.x"
+  }
+}
