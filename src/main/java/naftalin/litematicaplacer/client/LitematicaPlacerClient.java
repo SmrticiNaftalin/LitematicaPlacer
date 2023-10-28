@@ -8,6 +8,7 @@ import net.minecraft.block.*;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import fi.dy.masa.litematica.world.WorldSchematic;
 
+import net.minecraft.block.enums.BedPart;
 import net.minecraft.block.enums.BlockHalf;
 import net.minecraft.block.enums.SlabType;
 import net.minecraft.client.MinecraftClient;
@@ -133,6 +134,8 @@ public class LitematicaPlacerClient implements ClientModInitializer {
 
     public void checkRadius(int x, int y, int z, int radiusHorizontal, int radiusVertical) {
 
+        WorldSchematic worldSchematic = SchematicWorldHandler.getSchematicWorld();
+
         x = (int) (x - (Math.ceil(radiusHorizontal / 2)) - 1);
         y = (int) (y - (Math.ceil(radiusVertical / 2)) - 1);
         z = (int) (z - (Math.ceil(radiusHorizontal / 2)) - 1);
@@ -155,8 +158,6 @@ public class LitematicaPlacerClient implements ClientModInitializer {
                         continue;
                     }
 
-                    WorldSchematic worldSchematic = SchematicWorldHandler.getSchematicWorld();
-
                     BlockState stateLite = worldSchematic.getBlockState(blockPos);
                     BlockState stateReal = MC.world.getBlockState(blockPos);
 
@@ -166,8 +167,13 @@ public class LitematicaPlacerClient implements ClientModInitializer {
                     if (stateReal == stateLite) {
                         continue;
                     }
-                    if (blockReal instanceof BlockWithEntity) {
+                    if (blockReal instanceof BlockWithEntity || blockReal instanceof BedBlock) {
                         continue;
+                    }
+                    if (blockLite instanceof BedBlock) {
+                        if (stateLite.get(Properties.BED_PART) == BedPart.HEAD) {
+                            continue;
+                        }
                     }
 
                     if (blockReal == blockLite ) {
@@ -175,11 +181,10 @@ public class LitematicaPlacerClient implements ClientModInitializer {
                     } else {
                         handlePlaceBlock(stateReal, stateLite, blockPos);
                     }
-
-                    }
                 }
             }
         }
+    }
 
 
     public Direction getDirectionHorizontal(BlockState state, BlockPos blockPos){
@@ -256,7 +261,7 @@ public class LitematicaPlacerClient implements ClientModInitializer {
                 ItemStack savedStack = MC.player.getMainHandStack();
                 MC.player.setStackInHand(Hand.MAIN_HAND, ItemStack.EMPTY);
 
-                MC.interactionManager.interactBlock(MC.player, Hand.OFF_HAND, new BlockHitResult(new Vec3d(blockPos.getX(), blockPos.getY(), blockPos.getY()), Direction.UP, blockPos, false));
+                MC.interactionManager.interactBlock(MC.player, Hand.OFF_HAND, new BlockHitResult(new Vec3d(blockPos.getX(), blockPos.getY(), blockPos.getZ()), Direction.UP, blockPos, false));
 
                 MC.player.setStackInHand(Hand.MAIN_HAND, savedStack);
                 return;
@@ -304,14 +309,14 @@ public class LitematicaPlacerClient implements ClientModInitializer {
             placeBlock(blockPos, directionHorizontal);
         }
 
+        if (MC.world.getBlockState(blockPos).getBlock() != blockReal) {
+            removeOneFromHand();
+        }
+
         MC.player.getInventory().selectedSlot = slot;
         MC.player.setYaw(savedYaw);
         MC.player.setPitch(savedPitch);
         MC.player.networkHandler.sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(savedYaw, pitch, MC.player.isOnGround()));
-
-        if (MC.world.getBlockState(blockPos).getBlock() != blockReal) {
-            removeOneFromHand();
-        }
     }
 
     public boolean tryDirection(BlockState state, Direction desiredDirection, Direction testDirection, BlockPos blockPos) {
@@ -349,7 +354,7 @@ public class LitematicaPlacerClient implements ClientModInitializer {
         return desiredDirection == directionAfterPlacement;
     }
     public void toggle() {
-        if (litematicaplacerEnabled == false) {
+        if (!litematicaplacerEnabled) {
             MC.player.sendMessage(Text.literal("Litematica Placer enabled"), true);
             litematicaplacerEnabled = true;
         } else {
